@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv
+ENV/
+build/
+dist/
+*.egg-info/
+
+# Environment variables
+.env
+.env.local
+
+# Database
+*.db
+*.sqlite3
+
+# ML Models & Data
+ml/models/**/*.pkl
+ml/models/**/*.h5
+ml/data/raw/*.pdf
+ml/vectordb/chroma.sqlite3
+ml/data/embeddings/*
+!ml/data/embeddings/.gitkeep
+
+# MLflow
+mlflow/mlruns/
+mlflow/mlflow.db
+
+# Notebooks
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Kubernetes secrets
+k8s/secret.yaml
+
+# Logs
+*.log
