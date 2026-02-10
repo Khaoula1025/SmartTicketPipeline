@@ -4,7 +4,8 @@ import nltk
 import ssl
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
-# importation des ressources NLTK   
+
+# --- Setup NLTK ---
 try:
     _create_unverified_https_context = ssl._create_unverified_context
 except AttributeError:
@@ -21,6 +22,7 @@ except Exception as e:
     print(f" Erreur téléchargement NLTK: {e}")
 
 
+# --- Functions ---
 def clean_text(text):
     """Nettoyage NLP de base"""
     if pd.isna(text) or text == '':
@@ -64,23 +66,39 @@ def tokenize_multilingual(text):
         return text.split()
     
 def dataProcessing(dataset_path):
-   data=pd.read_csv(dataset_path)
-   data['subject'] = data['subject'].fillna('')
-   data['body'] = data['body'].fillna('')
-   data['answer'] = data['answer'].fillna('')
+    """Charge, nettoie et traite les données"""
+    print(f"Traitement du fichier: {dataset_path}")
+    data = pd.read_csv(dataset_path)
+    
+    # Remplir les valeurs manquantes
+    for col in ['subject', 'body', 'answer']:
+        data[col] = data[col].fillna('')
 
-   # Créer le texte combiné pour NLP
-   data['text'] = data['subject'] + ' ' + data['body']
+    # Créer le texte combiné pour NLP
+    data['text'] = data['subject'] + ' ' + data['body']
 
-   # Gérer les tags utiles (< 8% nulls)
-   for col in ['tag_2', 'tag_3', 'tag_4']:
+    # Gérer les tags utiles
+    for col in ['tag_2', 'tag_3', 'tag_4']:
           data[col] = data[col].fillna('')
 
-   # SUPPRIMER les colonnes trop vides (> 30% nulls)
-   data = data.drop(columns=['tag_5', 'tag_6', 'tag_7', 'tag_8'])
-   data=data.drop(columns=['subject', 'body'])
-   data['text'] = data['text'].apply(clean_text)
-   data['tokens']=data['text'].apply(tokenize_multilingual)
-   return data
+    # SUPPRIMER les colonnes trop vides
+    columns_to_drop = ['tag_5', 'tag_6', 'tag_7', 'tag_8', 'subject', 'body']
+    data = data.drop(columns=columns_to_drop, errors='ignore')
+    
+    # Nettoyage et Tokenisation
+    data['text'] = data['text'].apply(clean_text)
+    data['tokens'] = data['text'].apply(tokenize_multilingual)
+    
+    # Sauvegarde
+    output_path = 'data/processed/tickets_cleaned.csv'
+    data.to_csv(output_path, index=False)
+    print(f"Dataset sauvegardé: {output_path}")
 
+# --- Main Execution ---
+def main():
+    # chemin vers votre fichier
+    input_dataset = 'data/raw/dataset.csv' 
+    dataProcessing(input_dataset)
 
+if __name__ == "__main__":
+    main()
