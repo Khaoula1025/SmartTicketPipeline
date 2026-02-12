@@ -89,7 +89,7 @@ def split_train_test(X, y, test_size=0.2, random_state=42):
     Returns:
         tuple: (X_train, X_test, y_train, y_test)
     """
-    print(f"\n✂️  Séparation train/test...")
+    print(f"\n Séparation train/test...")
     print(f"   Test size: {test_size*100:.0f}%")
     
     X_train, X_test, y_train, y_test = train_test_split(
@@ -99,12 +99,12 @@ def split_train_test(X, y, test_size=0.2, random_state=42):
         stratify=y  # Garde la même distribution de classes
     )
     
-    print(f"✅ Split terminé:")
+    print(f"Split terminé:")
     print(f"   Train: {len(X_train)} samples ({len(X_train)/len(X)*100:.1f}%)")
     print(f"   Test:  {len(X_test)} samples ({len(X_test)/len(X)*100:.1f}%)")
     
     # Vérifier la distribution dans train et test
-    print(f"\n📊 Distribution dans le train set:")
+    print(f"\n Distribution dans le train set:")
     train_dist = pd.Series(y_train).value_counts(normalize=True) * 100
     for cls, pct in train_dist.items():
         print(f"   {cls}: {pct:.1f}%")
@@ -124,7 +124,7 @@ def train_model(X_train, y_train, model_type='logistic_regression'):
     Returns:
         model: Modèle entraîné
     """
-    print(f"\n🤖 Entraînement du modèle: {model_type}...")
+    print(f"\n Entraînement du modèle: {model_type}...")
     
     if model_type == 'logistic_regression':
         model = LogisticRegression(
@@ -147,6 +147,6 @@ def train_model(X_train, y_train, model_type='logistic_regression'):
     # Entraîner
     model.fit(X_train, y_train)
     
-    print(f"✅ Entraînement terminé")
+    print(f" Entraînement terminé")
     
     return model
