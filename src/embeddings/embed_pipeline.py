@@ -174,38 +174,38 @@ def index_in_chromadb(embeddings, df, chroma_path='data/chromadb', collection_na
     return collection
 
 
-def test_similarity_search(collection, query_text, model, top_k=5):
-    """
-    Tester la recherche de similarité
+# def test_similarity_search(collection, query_text, model, top_k=5):
+#     """
+#     Tester la recherche de similarité
     
-    Args:
-        collection: Collection ChromaDB
-        query_text (str): Texte de recherche
-        model (SentenceTransformer): Modèle pour encoder la requête
-        top_k (int): Nombre de résultats à retourner
-    """
-    print(f"\n🔍 Test de recherche de similarité...")
-    print(f"   Requête: '{query_text}'")
+#     Args:
+#         collection: Collection ChromaDB
+#         query_text (str): Texte de recherche
+#         model (SentenceTransformer): Modèle pour encoder la requête
+#         top_k (int): Nombre de résultats à retourner
+#     """
+#     print(f"\n🔍 Test de recherche de similarité...")
+#     print(f"   Requête: '{query_text}'")
     
-    # Encoder la requête
-    query_embedding = model.encode([query_text])[0]
+#     # Encoder la requête
+#     query_embedding = model.encode([query_text])[0]
     
-    # Rechercher les documents similaires
-    results = collection.query(
-        query_embeddings=[query_embedding.tolist()],
-        n_results=top_k
-    )
+#     # Rechercher les documents similaires
+#     results = collection.query(
+#         query_embeddings=[query_embedding.tolist()],
+#         n_results=top_k
+#     )
     
-    # Afficher les résultats
-    print(f"\n📋 Top {top_k} tickets similaires:")
-    for i, (doc, metadata, distance) in enumerate(zip(
-        results['documents'][0],
-        results['metadatas'][0],
-        results['distances'][0]
-    )):
-        print(f"\n   {i+1}. Type: {metadata['type']} | Distance: {distance:.4f}")
-        print(f"      Langue: {metadata['language']} | Queue: {metadata['queue']}")
-        print(f"      Texte: {doc[:120]}...")
+#     # Afficher les résultats
+#     print(f"\n📋 Top {top_k} tickets similaires:")
+#     for i, (doc, metadata, distance) in enumerate(zip(
+#         results['documents'][0],
+#         results['metadatas'][0],
+#         results['distances'][0]
+#     )):
+#         print(f"\n   {i+1}. Type: {metadata['type']} | Distance: {distance:.4f}")
+#         print(f"      Langue: {metadata['language']} | Queue: {metadata['queue']}")
+#         print(f"      Texte: {doc[:120]}...")
 
 
 # ============================================================
@@ -253,8 +253,8 @@ def generate_embeddings_pipeline(
     # 6. Indexer dans ChromaDB
     collection = index_in_chromadb(embeddings_normalized, df, chroma_path)
     
-    # 7. Test de recherche
-    test_similarity_search(collection, "email not working login problem", model)
+    # # 7. Test de recherche
+    # test_similarity_search(collection, "email not working login problem", model)
     
     print("\n" + "="*70)
     print(" ✅ ÉTAPE 2 TERMINÉE ".center(70))

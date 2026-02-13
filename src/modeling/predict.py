@@ -1,4 +1,3 @@
-import pandas as pd
 import numpy as np
 from src.modeling.train import load_data_and_embeddings, prepare_features_and_target,split_train_test, train_model,evaluate_model
 
@@ -7,9 +6,7 @@ def train_classification_pipeline(
     csv_path='tickets_cleaned.csv',
     embeddings_path='data/embeddings/tickets_embeddings.npy',
     model_type='logistic_regression',
-    test_size=0.2,
-    output_dir='models'
-):
+    test_size=0.2):
     """
     Pipeline complet d'entraînement du modèle de classification
     
@@ -23,10 +20,6 @@ def train_classification_pipeline(
     Returns:
         tuple: (model, metrics, X_test, y_test, y_pred)
     """
-    print("="*70)
-    print(" ENTRAÎNEMENT DU MODÈLE DE CLASSIFICATION ".center(70))
-    print("="*70)
-    
     # 1. Charger les données et embeddings
     df, embeddings = load_data_and_embeddings(csv_path, embeddings_path)
     
