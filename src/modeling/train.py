@@ -3,7 +3,10 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.preprocessing import LabelEncoder
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import OneHotEncoder, MultiLabelBinarizer, LabelEncoder
 
 
 def load_data_and_embeddings(csv_path, embeddings_path):
@@ -39,134 +42,52 @@ def load_data_and_embeddings(csv_path, embeddings_path):
     return df, embeddings
 
 
-def prepare_features_and_target(df, embeddings, target_column='type', use_metadata=True):
+def prepare_features_and_target(df, embeddings):
     """
-    Préparer les features (X) et la cible (y)
-    
-    AMÉLIORATION: Combine embeddings + métadonnées
-    
-    Args:
-        df (pd.DataFrame): Dataset
-        embeddings (np.ndarray): Matrice d'embeddings
-        target_column (str): Nom de la colonne cible
-        use_metadata (bool): Inclure ou non les métadonnées
-    
-    Returns:
-        tuple: (X, y, classes, feature_info)
+    Minimalist feature engineering: Combines text embeddings, 
+    one-hot encoded metadata, and multi-label tags.
     """
-    print(f"\n🔧 Préparation des features et target...")
+    print(f"\n Preparing Features for X (Input) and y (Target)...")
+
+    # 1. PROCESS METADATA (Language, Priority, Queue)
+    # Using OneHotEncoder is better for ML models than LabelEncoder for non-ordinal data
+    cat_cols = ['language', 'priority', 'queue']
+    encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+    X_meta = encoder.fit_transform(df[cat_cols].fillna('unknown'))
+    print(f"  • Categorical features encoded: {X_meta.shape[1]} columns")
+
+    # 2. PROCESS TAGS (Multi-label)
+    # Combine tag_1 through tag_4 into a list of tags per row
+    tag_cols = ['tag_1', 'tag_2', 'tag_3', 'tag_4']
+    combined_tags = df[tag_cols].fillna('').apply(
+        lambda x: [t.strip() for t in x if t.strip() != ''], axis=1
+    )
     
-    # ============================================================
-    # PARTIE 1: EMBEDDINGS (features textuelles automatiques)
-    # ============================================================
-    X_embeddings = embeddings
-    print(f" Embeddings shape: {X_embeddings.shape}")
+    mlb = MultiLabelBinarizer()
+    X_tags = mlb.fit_transform(combined_tags)
+    print(f"  • Tags encoded (Multi-label): {X_tags.shape[1]} columns")
+
+    # 3. COMBINE EVERYTHING INTO X
+    # Structure: [Embeddings | OneHot Metadata | Multi-label Tags]
+    X = np.hstack([embeddings, X_meta, X_tags])
+    print(f"  • Final X shape: {X.shape}")
+
+    # 4. PREPARE TARGET (y)
+    y_encoder = LabelEncoder()
+    y = y_encoder.fit_transform(df['type'])
+    classes = y_encoder.classes_
     
-    # ============================================================
-    # PARTIE 2: MÉTADONNÉES (features structurées)
-    # ============================================================
-    if use_metadata:
-        print(f"\n  Ajout des métadonnées...")
-        
-        # --- Features catégorielles ---
-        categorical_features = ['language', 'queue', 'priority']
-        
-        # Initialiser les encoders
-        label_encoders = {}
-        X_categorical = []
-        
-        for col in categorical_features:
-            if col in df.columns:
-                # Encoder les catégories en nombres
-                le = LabelEncoder()
-                encoded = le.fit_transform(df[col].fillna('unknown'))
-                X_categorical.append(encoded.reshape(-1, 1))
-                label_encoders[col] = le
-                
-                print(f"   • {col}: {len(le.classes_)} catégories")
-            else:
-                print(f"  Colonne '{col}' manquante")
-        
-        # Concatener les features catégorielles
-        if X_categorical:
-            X_categorical = np.hstack(X_categorical)
-            print(f"    Features catégorielles: {X_categorical.shape}")
-        else:
-            X_categorical = np.array([]).reshape(len(df), 0)
-        
-        # --- Features numériques (optionnel) ---
-        # Exemple: longueur du texte, nombre de mots, etc.
-        X_numerical = []
-        
-        if 'text' in df.columns:
-            # Longueur du texte
-            text_length = df['text'].str.len().fillna(0).values.reshape(-1, 1)
-            X_numerical.append(text_length)
-            
-            # Nombre de mots
-            word_count = df['text'].str.split().str.len().fillna(0).values.reshape(-1, 1)
-            X_numerical.append(word_count)
-            
-            print(f"   • text_length: OK")
-            print(f"   • word_count: OK")
-        
-        if X_numerical:
-            X_numerical = np.hstack(X_numerical)
-            
-            # Normaliser les features numériques
-            scaler = StandardScaler()
-            X_numerical = scaler.fit_transform(X_numerical)
-            
-            print(f"    Features numériques: {X_numerical.shape}")
-        else:
-            X_numerical = np.array([]).reshape(len(df), 0)
-        
-        # ============================================================
-        # PARTIE 3: COMBINER TOUTES LES FEATURES
-        # ============================================================
-        print(f"\n🔗 Combinaison des features...")
-        
-        # Concatener: [embeddings | catégorielles | numériques]
-        X = np.hstack([X_embeddings, X_categorical, X_numerical])
-        
-        print(f"   📊 Shape finale: {X.shape}")
-        print(f"      • Embeddings: {X_embeddings.shape[1]} dimensions")
-        print(f"      • Catégorielles: {X_categorical.shape[1]} features")
-        print(f"      • Numériques: {X_numerical.shape[1]} features")
-        
-        # Stocker les informations sur les features
-        feature_info = {
-            'embedding_dim': X_embeddings.shape[1],
-            'categorical_features': categorical_features,
-            'label_encoders': label_encoders,
-            'total_features': X.shape[1]
-        }
-    else:
-        # Mode simple: embeddings seulement
-        X = X_embeddings
-        feature_info = {
-            'embedding_dim': X_embeddings.shape[1],
-            'total_features': X.shape[1]
-        }
+    print(f"  • Target '{'type'}' ready. Found {len(classes)} classes.")
     
-    # ============================================================
-    # PARTIE 4: TARGET
-    # ============================================================
-    y = df[target_column].values
-    classes = np.unique(y)
-    
-    print(f"\n Target: {target_column}")
-    print(f"   • Nombre de classes: {len(classes)}")
-    print(f"   • Classes: {classes}")
-    
-    # Distribution des classes
-    print(f"\n Distribution des classes:")
-    class_counts = pd.Series(y).value_counts()
-    for cls, count in class_counts.items():
-        percentage = (count / len(y)) * 100
-        print(f"   • {cls}: {count} ({percentage:.1f}%)")
-    
-    return X, y, classes, feature_info
+    # feature_info = {
+    #     'total_dim': X.shape[1],
+    #     'embedding_dim': embeddings.shape[1],
+    #     'meta_dim': X_meta.shape[1],
+    #     'tags_dim': X_tags.shape[1],
+    #     'encoders': {'meta': encoder, 'tags': mlb, 'target': y_encoder}
+    # }
+
+    return X, y, classes
 
 
 def split_train_test(X, y, test_size=0.2, random_state=42):
@@ -182,7 +103,7 @@ def split_train_test(X, y, test_size=0.2, random_state=42):
     Returns:
         tuple: (X_train, X_test, y_train, y_test)
     """
-    print(f"\n✂️  Séparation train/test...")
+    print(f"\n Séparation train/test...")
     print(f"   Test size: {test_size*100:.0f}%")
     
     X_train, X_test, y_train, y_test = train_test_split(
@@ -211,7 +132,7 @@ def train_model(X_train, y_train, model_type='logistic_regression'):
     Returns:
         model: Modèle entraîné
     """
-    print(f"\n🤖 Entraînement du modèle: {model_type}...")
+    print(f"\n Entraînement du modèle: {model_type}...")
     
     if model_type == 'logistic_regression':
         model = LogisticRegression(
@@ -237,11 +158,6 @@ def train_model(X_train, y_train, model_type='logistic_regression'):
     print(f" Entraînement terminé")
     
     return model
-
-
-# ============================================================
-# EXEMPLE D'UTILISATION
-# ============================================================
 
 def example_usage():
     """Exemple montrant la différence entre les deux approches"""

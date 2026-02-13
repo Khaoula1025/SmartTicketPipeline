@@ -1,5 +1,6 @@
 import numpy as np
-from src.modeling.train import load_data_and_embeddings, prepare_features_and_target,split_train_test, train_model,evaluate_model
+from src.modeling.train import load_data_and_embeddings, prepare_features_and_target,split_train_test, train_model
+from src.modeling.evaluate import evaluate_model
 
 
 def train_classification_pipeline(
@@ -63,5 +64,4 @@ if __name__ == "__main__":
         embeddings_path='data/embeddings/tickets_embeddings.npy',
         model_type='logistic_regression',  # ou 'random_forest'
         test_size=0.2,
-        output_dir='models'
     )
