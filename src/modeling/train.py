@@ -1,13 +1,18 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import OneHotEncoder, MultiLabelBinarizer, LabelEncoder
-
+import joblib
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 def load_data_and_embeddings(csv_path, embeddings_path):
     """
@@ -76,140 +81,81 @@ def prepare_features_and_target(df, embeddings):
     y_encoder = LabelEncoder()
     y = y_encoder.fit_transform(df['type'])
     classes = y_encoder.classes_
-    
+    # Store encoders in a dictionary for easy saving
+    feature_info = {
+        'encoders': {
+            'meta': encoder,
+            'tags': mlb,
+            'target': y_encoder
+        }
+    }
     print(f"  • Target '{'type'}' ready. Found {len(classes)} classes.")
-    
-    # feature_info = {
-    #     'total_dim': X.shape[1],
-    #     'embedding_dim': embeddings.shape[1],
-    #     'meta_dim': X_meta.shape[1],
-    #     'tags_dim': X_tags.shape[1],
-    #     'encoders': {'meta': encoder, 'tags': mlb, 'target': y_encoder}
-    # }
-
-    return X, y, classes
+    return X, y, classes , feature_info
 
 
-def split_train_test(X, y, test_size=0.2, random_state=42):
+def train_and_evaluate_model(csv_path, embeddings_path, model_save_path="models/ticket_model.joblib"):
     """
-    Séparer les données en train et test
-    
-    Args:
-        X (np.ndarray): Features
-        y (np.ndarray): Target
-        test_size (float): Proportion du test set
-        random_state (int): Seed pour reproductibilité
-    
-    Returns:
-        tuple: (X_train, X_test, y_train, y_test)
+    Splits data, trains a Random Forest, and evaluates performance.
     """
-    print(f"\n Séparation train/test...")
-    print(f"   Test size: {test_size*100:.0f}%")
-    
+    print(f"\n Starting Model Training Pipeline...")
+    df, embeddings=load_data_and_embeddings(csv_path, embeddings_path)
+    X,y,classes,feature_info=prepare_features_and_target(df, embeddings)
+    # 1. SPLIT DATA
+    # Stratify ensures the distribution of classes is similar in train/test
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y,
-        test_size=test_size,
-        random_state=random_state,
-        stratify=y  # Garde la même distribution de classes
+        X, y, test_size=0.2, random_state=42, stratify=y
     )
-    
-    print(f" Split terminé:")
-    print(f"   • Train: {len(X_train)} samples ({len(X_train)/len(X)*100:.1f}%)")
-    print(f"   • Test:  {len(X_test)} samples ({len(X_test)/len(X)*100:.1f}%)")
-    
-    return X_train, X_test, y_train, y_test
+    print(f"  • Training set: {X_train.shape[0]} samples")
+    print(f"  • Testing set: {X_test.shape[0]} samples")
 
-
-def train_model(X_train, y_train, model_type='logistic_regression'):
-    """
-    Entraîner le modèle de classification
-    
-    Args:
-        X_train (np.ndarray): Features d'entraînement
-        y_train (np.ndarray): Target d'entraînement
-        model_type (str): Type de modèle ('logistic_regression' ou 'random_forest')
-    
-    Returns:
-        model: Modèle entraîné
-    """
-    print(f"\n Entraînement du modèle: {model_type}...")
-    
-    if model_type == 'logistic_regression':
-        model = LogisticRegression(
-            max_iter=1000,
-            random_state=42,
-            n_jobs=-1,  # Utiliser tous les CPU
-            verbose=0
-        )
-    elif model_type == 'random_forest':
-        model = RandomForestClassifier(
-            n_estimators=100,
-            max_depth=20,
-            random_state=42,
-            n_jobs=-1,
-            verbose=0
-        )
-    else:
-        raise ValueError(f"Type de modèle inconnu: {model_type}")
-    
-    # Entraîner
+    # 2. TRAIN MODEL
+    # Random Forest handles high-dimensional vectors (embeddings) well
+    model = RandomForestClassifier(
+        n_estimators=100, 
+        max_depth=None, 
+        random_state=42, 
+        n_jobs=-1 # Use all CPU cores
+    )
+    print(f"  • Training Random Forest...")
     model.fit(X_train, y_train)
+    print(f"  • Model trained successfully.")
+    # SAVE EVERYTHING
+    payload = {
+        'model': model,
+        'feature_info': feature_info
+    }
+    joblib.dump(payload, model_save_path)
+    print(f"✅ Model and encoders saved to {model_save_path}")
+    # 3. PREDICT & EVALUATE
+    y_pred = model.predict(X_test)
     
-    print(f" Entraînement terminé")
-    
+    print(f"\n📊 Evaluation Report:")
+    print(classification_report(y_test, y_pred, target_names=classes))
+
+    # 4. PLOT CONFUSION MATRIX
+    plt.figure(figsize=(10, 8))
+    cm = confusion_matrix(y_test, y_pred)
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
+                xticklabels=classes, yticklabels=classes)
+    plt.xlabel('Predicted')
+    plt.ylabel('Actual')
+    plt.title('Confusion Matrix')
+    plt.show()
     return model
+# model =train_and_evaluate_model(csv_path='data/processed/tickets_cleaned.csv', embeddings_path='data/embeddings/tickets_embeddings.npy', model_save_path="models/ticket_model.joblib")
+# print(f"\n✅ Training pipeline completed successfully.")
+# print(model)
+# 1. Define your paths
+# csv_path = 'data/processed/tickets_cleaned.csv'
+# embeddings_path = 'data/embeddings/tickets_embeddings.npy'
 
-def example_usage():
-    """Exemple montrant la différence entre les deux approches"""
-    
-    print("="*70)
-    print(" COMPARAISON: Embeddings seuls vs Embeddings + Métadonnées ".center(70))
-    print("="*70)
-    
-    # Charger les données
-    df, embeddings = load_data_and_embeddings(
-        'data/processed/tickets_cleaned.csv',
-        'data/embeddings/tickets_embeddings.npy'
-    )
-    
-    # ============================================================
-    # APPROCHE 1: Embeddings seulement (code original)
-    # ============================================================
-    print("\n" + "="*70)
-    print(" APPROCHE 1: Embeddings seulement ".center(70))
-    print("="*70)
-    
-    X1, y1, classes1, info1 = prepare_features_and_target(
-        df, embeddings, use_metadata=False
-    )
-    print(f"\n📊 Résultat:")
-    print(f"   X shape: {X1.shape}")
-    print(f"   Features: {info1['total_features']}")
-    
-    # ============================================================
-    # APPROCHE 2: Embeddings + Métadonnées (amélioré)
-    # ============================================================
-    print("\n" + "="*70)
-    print(" APPROCHE 2: Embeddings + Métadonnées ".center(70))
-    print("="*70)
-    
-    X2, y2, classes2, info2 = prepare_features_and_target(
-        df, embeddings, use_metadata=True
-    )
-    print(f"\n📊 Résultat:")
-    print(f"   X shape: {X2.shape}")
-    print(f"   Features: {info2['total_features']}")
-    
-    # ============================================================
-    # COMPARAISON
-    # ============================================================
-    print("\n" + "="*70)
-    print(" DIFFÉRENCE ".center(70))
-    print("="*70)
-    print(f"Approche 1: {X1.shape[1]} features (embeddings seulement)")
-    print(f"Approche 2: {X2.shape[1]} features (embeddings + métadonnées)")
-    print(f"Gain: +{X2.shape[1] - X1.shape[1]} features supplémentaires")
-    
+# # 2. Use your existing loader function to get the actual objects
+# df_loaded, embeddings_loaded = load_data_and_embeddings(csv_path, embeddings_path)
 
-if __name__ == "__main__":
-    example_usage()
+# # 3. Pass the LOADED objects into the feature preparation function
+# # Note: I've swapped them to match your function's argument order (df, embeddings)
+# X, y, classes, feature_info = prepare_features_and_target(df_loaded, embeddings_loaded)
+
+# # 4. Now you can safely inspect feature_info
+# print("\n--- Feature Info Encoders ---")
+# print(feature_info)

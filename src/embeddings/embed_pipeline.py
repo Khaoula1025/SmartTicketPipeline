@@ -173,45 +173,6 @@ def index_in_chromadb(embeddings, df, chroma_path='data/chromadb', collection_na
     
     return collection
 
-
-# def test_similarity_search(collection, query_text, model, top_k=5):
-#     """
-#     Tester la recherche de similarité
-    
-#     Args:
-#         collection: Collection ChromaDB
-#         query_text (str): Texte de recherche
-#         model (SentenceTransformer): Modèle pour encoder la requête
-#         top_k (int): Nombre de résultats à retourner
-#     """
-#     print(f"\n🔍 Test de recherche de similarité...")
-#     print(f"   Requête: '{query_text}'")
-    
-#     # Encoder la requête
-#     query_embedding = model.encode([query_text])[0]
-    
-#     # Rechercher les documents similaires
-#     results = collection.query(
-#         query_embeddings=[query_embedding.tolist()],
-#         n_results=top_k
-#     )
-    
-#     # Afficher les résultats
-#     print(f"\n📋 Top {top_k} tickets similaires:")
-#     for i, (doc, metadata, distance) in enumerate(zip(
-#         results['documents'][0],
-#         results['metadatas'][0],
-#         results['distances'][0]
-#     )):
-#         print(f"\n   {i+1}. Type: {metadata['type']} | Distance: {distance:.4f}")
-#         print(f"      Langue: {metadata['language']} | Queue: {metadata['queue']}")
-#         print(f"      Texte: {doc[:120]}...")
-
-
-# ============================================================
-# PIPELINE PRINCIPAL
-# ============================================================
-
 def generate_embeddings_pipeline(
     input_csv='data/processed/tickets_cleaned.csv',
     output_dir='data/embeddings',
