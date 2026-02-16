@@ -7,7 +7,7 @@ spec:
     spec:
       containers:
       - name: classifier
-        image: ticket-classifier:latest
+        image: ticket-classifier:v3
         imagePullPolicy: Never
         command: ["python", "src/modeling/predict.py"]
       restartPolicy: Never
