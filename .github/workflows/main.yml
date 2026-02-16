@@ -1,0 +1,27 @@
+name: ML Pipeline CI/CD
+on:
+  push:
+    branches: [ main, develop ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install Linting Tools
+        run: pip install flake8
+      - name: Run Lint
+        run: flake8 src/
+
+  build-docker:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build Docker Image
+        run: |
+          docker build -t ticket-classifier:latest .
