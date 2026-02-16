@@ -98,32 +98,29 @@ cp .env.example .env
 │   ├── raw/                    # Original email datasets
 │   └── processed/              # Cleaned and preprocessed data
 ├── notebooks/
-│   └── exploratory_analysis.ipynb
+│   └── ExploratoryDataAnalysis.ipynb
 ├── src/
 │   ├── preprocessing/
 │   │   └── nlp_cleaner.py     # Text cleaning and tokenization
 │   ├── embeddings/
-│   │   └── generator.py       # Hugging Face embeddings
-│   ├── models/
-│       └── classifier.py      # Classification model training
+|   |   ├──embed_pipeline.py
+│   |   └── hf_model.py       # Hugging Face embeddings
+|   |     
+│   └── modeling/
+|       ├──train.py
+│       └── predict.py
 |
-├── kubernetes/
-│   ├── job.yaml               # Kubernetes Job definition
-│   └── cronjob.yaml           # Scheduled pipeline execution
-├── monitoring/
-│   ├── prometheus.yml
-│   └── grafana/
-│       └── dashboards/
-├── docker/
-│   ├── Dockerfile
-│   └── docker-compose.yml
+├── k8s/
+│    └──job.yaml               # Kubernetes Job definition
+|
 ├── .github/
 │   └── workflows/
 │       └── ci-cd.yaml         # GitHub Actions pipeline
-├── reports/
-│   └── evidently/             # Generated drift reports
 ├── models/
 │   └── saved_models/          # Trained model artifacts
+├── Dockerfile
+├── docker-compose.yml
+├── prometheus.yml
 ├── requirements.txt
 └── README.md
 ```
@@ -174,25 +171,7 @@ python src/embeddings/generator.py --model sentence-transformers/all-MiniLM-L6-v
 python src/models/classifier.py --train
 ```
 
-### Step 5: ML Monitoring with Evidently AI
-
-**Objective**: Detect data and prediction drift
-
-```python
-from evidently import Report
-from evidently.presets import ClassificationPreset, DataDriftPreset
-
-# Generate drift report
-report = Report(metrics=[
-    DataDriftPreset(),
-    ClassificationPreset()
-])
-
-report.run(reference_data=baseline, current_data=new_data)
-report.save_html("reports/evidently/drift_report.html")
-```
-
-### Step 6: Containerization & Orchestration
+### Step 5: Containerization & Orchestration
 
 **Build Docker image**
 ```bash
@@ -227,14 +206,6 @@ Access services:
 ---
 
 ## 📊 Monitoring & Observability
-
-### ML Monitoring (Evidently AI)
-
-- **Data Drift**: Detect distribution changes in input features
-- **Prediction Drift**: Track model output stability
-- **Performance Metrics**: Monitor accuracy, precision, recall over time
-
-Reports are generated in `reports/evidently/` as interactive HTML files.
 
 ### Infrastructure Monitoring (Prometheus + Grafana)
 
@@ -318,7 +289,6 @@ GitHub Actions workflow automates:
 - ✅ NLP preprocessing scripts
 - ✅ ChromaDB embeddings storage
 - ✅ Trained classification model
-- ✅ Evidently AI drift reports
 - ✅ Docker images
 - ✅ Kubernetes manifests
 - ✅ Technical documentation
@@ -335,15 +305,9 @@ GitHub Actions workflow automates:
 
 ---
 
-## 📄 License
-
-This project is part of the **RNCP AI Developer Certification [2023]** program.
-
----
-
 ## 👤 Author
 
-**Yassine Ennaya**  
+**khaoula esioudi**  
 Created: 07/02/26
 
 ---
@@ -351,15 +315,6 @@ Created: 07/02/26
 ## 📞 Support
 
 For questions or issues, please open an issue in the GitHub repository or contact the project maintainer.
-
----
-
-## 🎯 Project Timeline
-
-- **Duration**: 1 week
-- **Start**: 09/02/2026
-- **Deadline**: 14/02/2026 (midnight)
-- **Format**: Individual work
 
 ---
 
@@ -386,5 +341,3 @@ make monitoring-up
 ```
 
 ---
-
-**Built with ❤️ for automated IT support ticket classification**
