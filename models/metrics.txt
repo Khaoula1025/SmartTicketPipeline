@@ -1,0 +1,35 @@
+==================================================
+MÉTRIQUES DU MODÈLE
+==================================================
+
+Accuracy: 0.7775
+Precision (weighted): 0.7613
+Recall (weighted): 0.7775
+F1-score (weighted): 0.7499
+
+Métriques par classe:
+--------------------------------------------------
+
+Change:
+  Precision: 0.9499
+  Recall: 0.8217
+  F1-score: 0.8811
+  Support: 415
+
+Incident:
+  Precision: 0.6909
+  Recall: 0.8979
+  F1-score: 0.7809
+  Support: 1596
+
+Problem:
+  Precision: 0.5562
+  Recall: 0.2366
+  F1-score: 0.3319
+  Support: 837
+
+Request:
+  Precision: 0.9397
+  Recall: 0.9878
+  F1-score: 0.9632
+  Support: 1152

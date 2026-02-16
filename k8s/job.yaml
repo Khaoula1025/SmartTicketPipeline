@@ -1,0 +1,14 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ticket-prediction-batch
+spec:
+  template:
+    spec:
+      containers:
+      - name: classifier
+        image: ticket-classifier:v3
+        imagePullPolicy: Never
+        command: ["python", "src/modeling/predict.py"]
+      restartPolicy: Never
+  backoffLimit: 2
